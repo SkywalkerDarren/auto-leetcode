@@ -44,6 +44,10 @@ async def submit_solution(
 
     if resp.status_code == 429:
         raise LeetCodeRateLimitError("Rate limited during submission")
+    if resp.status_code == 403:
+        raise LeetCodeRateLimitError(
+            f"Cloudflare challenge on submit for #{solution.problem_id} (403)"
+        )
     if resp.status_code != 200:
         raise LeetCodeClientError(f"Submit returned status {resp.status_code}: {resp.text}")
 

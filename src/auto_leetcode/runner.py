@@ -13,6 +13,7 @@ from auto_leetcode.errors import (
     LeetCodeRateLimitError,
 )
 from auto_leetcode.leetcode.client import LeetCodeClient
+from auto_leetcode.models.solution import Solution
 from auto_leetcode.models.submission import SubmissionResult, SubmissionStatus
 from auto_leetcode.storage.file_saver import FileSaver
 from auto_leetcode.storage.json_repository import JsonRepository
@@ -20,6 +21,7 @@ from auto_leetcode.storage.json_repository import JsonRepository
 logger = logging.getLogger(__name__)
 
 RATE_LIMIT_BACKOFF_SECONDS = 60
+CLOUDFLARE_MAX_RETRIES = 3
 
 
 def create_generator(config: Config) -> SolutionGenerator:
@@ -98,14 +100,8 @@ async def _solve_problem(
 
         saver.save(solution)
 
-        try:
-            result = await client.submit(solution)
-        except LeetCodeRateLimitError:
-            logger.warning("Rate limited submitting #%d, waiting %ds", problem_id, RATE_LIMIT_BACKOFF_SECONDS)
-            await asyncio.sleep(RATE_LIMIT_BACKOFF_SECONDS)
-            break
-        except LeetCodeClientError as e:
-            logger.error("Submit failed for #%d: %s", problem_id, e)
+        result = await _submit_with_retry(client, solution, problem_id)
+        if result is None:
             break
 
         repository.save(result)
@@ -135,3 +131,25 @@ async def _solve_problem(
         )
 
     await asyncio.sleep(config.submit_delay_seconds)
+
+
+async def _submit_with_retry(
+    client: LeetCodeClient,
+    solution: Solution,
+    problem_id: int,
+) -> SubmissionResult | None:
+    for submit_try in range(1, CLOUDFLARE_MAX_RETRIES + 1):
+        try:
+            return await client.submit(solution)
+        except LeetCodeRateLimitError:
+            logger.warning(
+                "Rate limited/blocked submitting #%d (attempt %d/%d), waiting %ds",
+                problem_id, submit_try, CLOUDFLARE_MAX_RETRIES,
+                RATE_LIMIT_BACKOFF_SECONDS,
+            )
+            await asyncio.sleep(RATE_LIMIT_BACKOFF_SECONDS)
+        except LeetCodeClientError as e:
+            logger.error("Submit failed for #%d: %s", problem_id, e)
+            return None
+    logger.error("Submit gave up for #%d after %d retries", problem_id, CLOUDFLARE_MAX_RETRIES)
+    return None
