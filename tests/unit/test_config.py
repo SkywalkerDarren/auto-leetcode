@@ -38,7 +38,7 @@ class TestConfig:
 
 class TestLoadConfig:
     def test_missing_env_raises(self) -> None:
-        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {}, clear=True), patch("auto_leetcode.config.load_dotenv"):
             with pytest.raises(ConfigError, match="LEETCODE_SESSION"):
                 load_config()
 

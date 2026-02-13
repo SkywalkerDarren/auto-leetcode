@@ -43,8 +43,8 @@ query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int) {
         skip: $skip
         filters: {}
     ) {
-        total
-        questions {
+        totalNum
+        data {
             questionFrontendId
             titleSlug
             isPaidOnly
@@ -108,11 +108,11 @@ class LeetCodeClient:
                 {"categorySlug": "", "limit": limit, "skip": skip},
             )
             question_list = data.get("problemsetQuestionList", {})
-            questions = question_list.get("questions", [])
+            questions = question_list.get("data", [])
             if not questions:
                 break
             all_questions.extend(questions)
-            total = question_list.get("total", 0)
+            total = question_list.get("totalNum", 0)
             skip += limit
             if skip >= total:
                 break

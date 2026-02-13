@@ -5,8 +5,15 @@ from auto_leetcode.models.submission import SubmissionResult
 
 SYSTEM_PROMPT = (
     "You are a competitive programming expert. "
-    "Given a LeetCode problem, write a correct Python solution. "
-    "Return ONLY the solution code, no explanation. "
+    "Given a LeetCode problem, first explain your thought process and approach, "
+    "then write a correct Python solution.\n\n"
+    "Format your response as:\n"
+    "## Approach\n"
+    "<your reasoning: algorithm choice, time/space complexity analysis, key insights>\n\n"
+    "## Solution\n"
+    "```python\n"
+    "<your code>\n"
+    "```\n\n"
     "The code must complete the given function signature. "
     "Do not include the class definition if it's already in the starter code."
 )
@@ -44,3 +51,14 @@ def extract_code(text: str) -> str:
     if match:
         return match.group(1).strip()
     return text.strip()
+
+
+def extract_reasoning(text: str) -> str:
+    match = re.search(r"##\s*Approach\s*\n(.*?)(?=##\s*Solution|```)", text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    # Fallback: everything before the first code block
+    match = re.search(r"^(.*?)```", text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return ""

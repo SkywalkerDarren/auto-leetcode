@@ -4,7 +4,12 @@ import logging
 
 from openai import APIError, AsyncOpenAI
 
-from auto_leetcode.ai.prompt import SYSTEM_PROMPT, build_user_prompt, extract_code
+from auto_leetcode.ai.prompt import (
+    SYSTEM_PROMPT,
+    build_user_prompt,
+    extract_code,
+    extract_reasoning,
+)
 from auto_leetcode.errors import AIGenerationError
 from auto_leetcode.models.problem import Problem
 from auto_leetcode.models.solution import Solution
@@ -46,6 +51,7 @@ class OpenAIGenerator:
 
         content = response.choices[0].message.content or ""
         code = extract_code(content)
+        reasoning = extract_reasoning(content)
 
         if not code.strip():
             raise AIGenerationError(
@@ -58,4 +64,5 @@ class OpenAIGenerator:
             language="python3",
             model_used=self._model,
             attempt=len(previous_attempts) + 1,
+            reasoning=reasoning,
         )

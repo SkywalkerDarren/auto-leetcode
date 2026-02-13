@@ -8,3 +8,4 @@ class Solution:
     language: str
     model_used: str
     attempt: int
+    reasoning: str = ""

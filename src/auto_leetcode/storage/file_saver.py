@@ -17,13 +17,23 @@ class FileSaver:
     def save(self, solution: Solution) -> Path:
         filename = f"{solution.problem_id:04d}.py"
         filepath = self._dir / filename
-        header = (
-            f"# Problem #{solution.problem_id}\n"
-            f"# Model: {solution.model_used}\n"
-            f"# Attempt: {solution.attempt}\n\n"
-        )
+        parts = [
+            f"# Problem #{solution.problem_id}",
+            f"# Model: {solution.model_used}",
+            f"# Attempt: {solution.attempt}",
+        ]
+        if solution.reasoning:
+            reasoning_lines = solution.reasoning.split("\n")
+            parts.append("#")
+            parts.append("# Approach:")
+            for line in reasoning_lines:
+                parts.append(f"# {line}" if line.strip() else "#")
+        parts.append("")
+        parts.append(solution.code)
+        parts.append("")
+
         try:
-            filepath.write_text(header + solution.code + "\n")
+            filepath.write_text("\n".join(parts))
         except OSError as e:
             raise StorageError(f"Failed to save solution to {filepath}: {e}") from e
 
