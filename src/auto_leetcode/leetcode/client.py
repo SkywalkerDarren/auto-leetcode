@@ -36,18 +36,34 @@ query questionData($titleSlug: String!) {
 """
 
 PROBLEM_LIST_QUERY = """
-query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int) {
+query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
     problemsetQuestionList: questionList(
         categorySlug: $categorySlug
         limit: $limit
         skip: $skip
-        filters: {}
+        filters: $filters
     ) {
         totalNum
         data {
             questionFrontendId
             titleSlug
             isPaidOnly
+        }
+    }
+}
+"""
+
+SOLVED_LIST_QUERY = """
+query solvedQuestions($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
+    problemsetQuestionList: questionList(
+        categorySlug: $categorySlug
+        limit: $limit
+        skip: $skip
+        filters: $filters
+    ) {
+        totalNum
+        data {
+            questionFrontendId
         }
     }
 }
@@ -105,7 +121,7 @@ class LeetCodeClient:
         while True:
             data = await self._graphql(
                 PROBLEM_LIST_QUERY,
-                {"categorySlug": "", "limit": limit, "skip": skip},
+                {"categorySlug": "", "limit": limit, "skip": skip, "filters": {}},
             )
             question_list = data.get("problemsetQuestionList", {})
             questions = question_list.get("data", [])
@@ -122,6 +138,29 @@ class LeetCodeClient:
             for q in all_questions
         }
         logger.info("Built slug map with %d problems", len(self._slug_map))
+
+    async def fetch_solved_ids(self) -> set[int]:
+        solved: list[int] = []
+        skip = 0
+        limit = 100
+        while True:
+            data = await self._graphql(
+                SOLVED_LIST_QUERY,
+                {"categorySlug": "", "limit": limit, "skip": skip, "filters": {"status": "AC"}},
+            )
+            question_list = data.get("problemsetQuestionList", {})
+            questions = question_list.get("data", [])
+            if not questions:
+                break
+            solved.extend(int(q["questionFrontendId"]) for q in questions)
+            total = question_list.get("totalNum", 0)
+            skip += limit
+            if skip >= total:
+                break
+
+        result = set(solved)
+        logger.info("Fetched %d solved problems from LeetCode", len(result))
+        return result
 
     async def fetch_problem(self, problem_id: int) -> Problem | None:
         if not self._slug_map:

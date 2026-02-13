@@ -26,10 +26,11 @@ def main() -> None:
 @click.option("--start", default=1, help="Starting problem ID")
 @click.option("--end", default=3000, help="Ending problem ID")
 @click.option("--retries", default=3, help="Max retries per problem")
-def solve(start: int, end: int, retries: int) -> None:
+@click.option("--skip-solved/--no-skip-solved", default=True, help="Skip already solved problems")
+def solve(start: int, end: int, retries: int, skip_solved: bool) -> None:
     """Solve problems sequentially."""
     try:
-        config = load_config(start_id=start, end_id=end, max_retries=retries)
+        config = load_config(start_id=start, end_id=end, max_retries=retries, skip_solved=skip_solved)
     except ConfigError as e:
         click.echo(f"Configuration error: {e}", err=True)
         sys.exit(1)

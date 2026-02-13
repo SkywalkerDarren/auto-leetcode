@@ -21,6 +21,7 @@ class Config:
     max_retries: int = 3
     retry_delay_seconds: float = 5.0
     submit_delay_seconds: float = 10.0
+    skip_solved: bool = True
     solutions_dir: Path = field(default_factory=lambda: Path("solutions"))
     results_path: Path = field(default_factory=lambda: Path("results.jsonl"))
 

@@ -90,7 +90,15 @@ class TestSolveProblem:
         deps["repository"].save(_result())
         await _solve_problem(
             deps["client"], deps["generator"], deps["repository"],
-            deps["saver"], deps["config"], 1,
+            deps["saver"], deps["config"], 1, set(),
+        )
+        deps["client"].fetch_problem.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_skips_remote_solved(self, deps: dict) -> None:
+        await _solve_problem(
+            deps["client"], deps["generator"], deps["repository"],
+            deps["saver"], deps["config"], 1, {1},
         )
         deps["client"].fetch_problem.assert_not_called()
 
@@ -103,7 +111,7 @@ class TestSolveProblem:
         deps["client"].fetch_problem = AsyncMock(return_value=paid_problem)
         await _solve_problem(
             deps["client"], deps["generator"], deps["repository"],
-            deps["saver"], deps["config"], 1,
+            deps["saver"], deps["config"], 1, set(),
         )
         deps["generator"].generate.assert_not_called()
 
@@ -116,7 +124,7 @@ class TestSolveProblem:
         deps["client"].fetch_problem = AsyncMock(return_value=no_snippet)
         await _solve_problem(
             deps["client"], deps["generator"], deps["repository"],
-            deps["saver"], deps["config"], 1,
+            deps["saver"], deps["config"], 1, set(),
         )
         deps["generator"].generate.assert_not_called()
 
@@ -130,7 +138,7 @@ class TestSolveProblem:
 
         await _solve_problem(
             deps["client"], deps["generator"], deps["repository"],
-            deps["saver"], deps["config"], 1,
+            deps["saver"], deps["config"], 1, set(),
         )
 
         assert deps["repository"].is_solved(1)
@@ -146,7 +154,7 @@ class TestSolveProblem:
 
         await _solve_problem(
             deps["client"], deps["generator"], deps["repository"],
-            deps["saver"], deps["config"], 1,
+            deps["saver"], deps["config"], 1, set(),
         )
 
         assert deps["repository"].is_solved(1)
@@ -162,7 +170,7 @@ class TestSolveProblem:
 
         await _solve_problem(
             deps["client"], deps["generator"], deps["repository"],
-            deps["saver"], deps["config"], 1,
+            deps["saver"], deps["config"], 1, set(),
         )
 
         assert not deps["repository"].is_solved(1)
@@ -176,7 +184,7 @@ class TestSolveProblem:
 
         await _solve_problem(
             deps["client"], deps["generator"], deps["repository"],
-            deps["saver"], deps["config"], 1,
+            deps["saver"], deps["config"], 1, set(),
         )
         assert not deps["repository"].is_solved(1)
 
@@ -187,6 +195,6 @@ class TestSolveProblem:
         )
         await _solve_problem(
             deps["client"], deps["generator"], deps["repository"],
-            deps["saver"], deps["config"], 1,
+            deps["saver"], deps["config"], 1, set(),
         )
         deps["generator"].generate.assert_not_called()

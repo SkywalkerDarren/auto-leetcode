@@ -45,9 +45,14 @@ async def run(config: Config) -> None:
         logger.info("Building problem slug map...")
         await client.build_slug_map()
 
+        remote_solved: set[int] = set()
+        if config.skip_solved:
+            logger.info("Fetching solved problems from LeetCode...")
+            remote_solved = await client.fetch_solved_ids()
+
         for problem_id in range(config.start_id, config.end_id + 1):
             await _solve_problem(
-                client, generator, repository, saver, config, problem_id
+                client, generator, repository, saver, config, problem_id, remote_solved
             )
 
 
@@ -58,8 +63,9 @@ async def _solve_problem(
     saver: FileSaver,
     config: Config,
     problem_id: int,
+    remote_solved: set[int],
 ) -> None:
-    if repository.is_solved(problem_id):
+    if repository.is_solved(problem_id) or problem_id in remote_solved:
         logger.info("Problem #%d already solved, skipping", problem_id)
         return
 
