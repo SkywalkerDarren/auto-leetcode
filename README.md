@@ -6,6 +6,8 @@ Supports OpenAI-compatible and Claude-compatible APIs (including proxy/relay ser
 
 [中文文档](README.zh.md)
 
+> If your company has absurd token usage quotas to hit, or you just want to benchmark how well a model handles algorithms (let's be honest, these problems are probably baked into the training data at this point lol), give this a spin.
+
 ## How It Works
 
 ```
